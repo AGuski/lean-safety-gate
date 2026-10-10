@@ -14,3 +14,10 @@ jobs:
       - uses: leanprover/lean-action@v1
       - name: Check specification lock, manifest, and axioms
         run: bash scripts/gate.sh
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Differential tests
+        run: |
+          python -m pip install -r python/requirements.txt
+          python -m pytest

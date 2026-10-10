@@ -10,6 +10,8 @@ English requirements in `REQUIREMENTS.md` are formalized as named propositions i
 
 The e-stop latch in the specification is defined from the inputs again, not by calling the model's latch update. Changing the controller does not silently change the requirement.
 
+`LeanSafetyGate/Main.lean` builds that model as the `safety-gate` executable. It reads a JSON trace on stdin and prints one motor output per input. `python/controller.py` is a separate implementation of the same scan. `python/test_differential.py` checks the two on a few fixed traces and on traces Hypothesis generates.
+
 Versions, setup commands, and the problems hit so far are in `docs/STACK.md`.
 
 ## Status
@@ -20,7 +22,7 @@ Versions, setup commands, and the problems hit so far are in `docs/STACK.md`.
 | Requirements, model, spec | `REQUIREMENTS.md`, `LeanSafetyGate/Model.lean`, `LeanSafetyGate/Spec.lean` | Written |
 | Proofs | `LeanSafetyGate/Proofs.lean` | One theorem per specification proposition |
 | CI gate | `.github/workflows/lean_action_ci.yml`, `scripts/gate.sh` | Build, source scan, axiom check, spec lock, and manifest |
-| Differential tests | not in the tree yet | Not started |
+| Differential tests | `LeanSafetyGate/Main.lean`, `python/controller.py`, `python/test_differential.py` | Python and the Lean executable agree on fixed traces and on generated traces |
 
 ## Run
 
@@ -39,3 +41,16 @@ bash scripts/gate.sh
 ```
 
 `spec.manifest` lists every `def <name> : Prop` in the specification. The gate elaborates a theorem of that name at type `Spec.<name>` and prints its axioms with `#print axioms`. `spec.lock` is the SHA-256 of `LeanSafetyGate/Spec.lean`. A specification edit is reviewable only when that hash changes in the same commit. `.github/CODEOWNERS` names the same files.
+
+The differential tests need Python, then:
+
+```sh
+python -m pip install -r python/requirements.txt
+python -m pytest
+```
+
+Pytest builds `safety-gate` if it is out of date and compares it with `python/controller.py`. A trace on its own is a JSON array of input records:
+
+```sh
+printf '%s' '[{"emergencyStop":false,"guardDoorClosed":true,"lightCurtainClear":true,"resetPressed":false,"startPressed":true}]' | lake exe safety-gate
+```

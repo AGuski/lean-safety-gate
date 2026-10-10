@@ -1,6 +1,10 @@
 name = "LeanSafetyGate"
 version = "0.1.0"
-defaultTargets = ["LeanSafetyGate"]
+defaultTargets = ["LeanSafetyGate", "safety-gate"]
 
 [[lean_lib]]
 name = "LeanSafetyGate"
+
+[[lean_exe]]
+name = "safety-gate"
+root = "LeanSafetyGate.Main"
