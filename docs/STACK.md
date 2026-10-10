@@ -70,4 +70,16 @@ A direct MCP client (the `mcp` Python client, speaking to `uvx lean-lsp-mcp==0.3
 
 The first hand-rolled client never returned. It spoke Content-Length frames and left the server's stderr in an unread pipe, so the process blocked once that pipe filled. The official client drains both streams and completed in a few seconds. Use that, or any client that reads stderr, rather than a one-shot frame script.
 
-This Cursor session's tool list did not include `lean-lsp` after `.cursor/mcp.json` was written. The server process works; the editor has not loaded the project server into the conversation yet. That load happens when Cursor reloads MCP servers. Phase 1 waits on that, because later proofs are supposed to inspect goals through this server rather than by guessing.
+This Cursor session's tool list did not include `lean-lsp` after `.cursor/mcp.json` was written. The server process works; the editor had not loaded the project server into the conversation yet.
+
+That cleared when the project server was enabled in Cursor's MCP settings. The same session then called `lean_goal` and `lean_diagnostic_messages` on a throwaway file and got the same two results as the direct client: goal `⊢ 1 + 1 = 2` before `rfl`, no goals after it, and the `#check` info `probe : 1 + 1 = 2`.
+
+A Lean 4 language-server extension was also installed in Cursor. That extension is the in-editor server. `lean-lsp-mcp` is a separate process the agent calls, and it starts its own `lake serve`. If the editor and the agent ever disagree about a diagnostic, that split is the first place to look.
+
+## Phase 1 — requirements and specification
+
+No toolchain change. `lake build` succeeds on `LeanSafetyGate.Model` and `LeanSafetyGate.Spec`. Diagnostics from `lean-lsp-mcp` on both files were empty. There are no theorems and no `sorry`.
+
+`#guard` lines in `Model.lean` evaluate a few traces. They are not proofs of the propositions in `Spec.lean`.
+
+**`List.get?` is not a field in Lean 4.34.** Writing `trace.get? i` failed with `Invalid field get?: The environment does not contain List.get?`. The indexing notation `trace[i]?` elaborates and is what `Spec.lean` uses.

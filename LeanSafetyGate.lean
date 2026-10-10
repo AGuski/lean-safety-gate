@@ -1,3 +1,3 @@
--- This module serves as the root of the `LeanSafetyGate` library.
--- Import modules here that should be built as part of the library.
-import LeanSafetyGate.Basic
+-- Root of the `LeanSafetyGate` library.
+import LeanSafetyGate.Model
+import LeanSafetyGate.Spec
