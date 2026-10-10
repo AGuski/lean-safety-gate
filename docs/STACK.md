@@ -98,3 +98,22 @@ What took the time:
 - `List.getElem?_cons_zero` is not a `@[simp]` lemma. Naming it in `simp` was redundant once the zero case reduced on its own, and the unused-argument warning said so.
 
 R3 and R6 are the proofs that had to talk about the previous cycle. On the first cycle of a suffix, "previous" is the motor bit in the carried state; after that it is the previous output. Getting those two to be the same `Nat` recursion was the fiddly part. R1, R2, and R5 were the same induction with less memory.
+
+## Phase 3 — CI gate
+
+No new toolchain. `lean-action` already builds the project on GitHub. `scripts/gate.sh` is the rest of the gate, and CI runs it after that build. Locally it is `bash scripts/gate.sh`. It builds again; on a warm `.lake` directory that is a no-op.
+
+The script checks four things after the build:
+
+- Lean sources contain no `sorry`, `admit`, or `axiom`. The pattern is a character class rather than `\b`, so BSD and GNU grep agree.
+- `spec.lock` is the SHA-256 of `LeanSafetyGate/Spec.lean`. macOS has `shasum`; Ubuntu CI has `sha256sum`. The script uses whichever is present.
+- Every `def <name> : Prop` in `Spec.lean` is listed in `spec.manifest`, and nothing else is. Propositions have to be written in that shape, at the start of a line, or the gate cannot see them.
+- For each manifest name, Lean elaborates `#check (Proofs.<name> : Spec.<name>)` and `#print axioms`. The output is rejected unless every axiom is one of `propext`, `Classical.choice`, and `Quot.sound`. That is the check that catches `sorryAx` and `native_decide` (`Lean.ofReduceBool`) even when the source scan is not enough.
+
+`lean-action` can also run `axiom-audit`, which inspects the compiled environment. This repo uses `#print axioms` instead, because that is the check the gate is supposed to show, and the same script owns the lock and the manifest.
+
+Problems:
+
+- A non-login shell did not have `lake` on `PATH`. The elan installer had updated `~/.zprofile` and `~/.profile`, which this kind of shell does not read. The script prepends `~/.elan/bin` when that directory exists. CI does not need the prepend; `lean-action` puts elan on `PATH` for later steps.
+- There is no GitHub login available here (`gh` is not installed, and there is no remote). `.github/CODEOWNERS` uses `@AGuski`, the local git author name. GitHub requests a review only if that is also the account login.
+- `#print axioms` writes to stdout, in the form `'Theorem' depends on axioms: [propext]`. The parser was checked against the six real theorems, all of which are `propext` only, and against a synthetic line containing `sorryAx`, which it rejects.

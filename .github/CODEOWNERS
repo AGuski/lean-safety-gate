@@ -1,0 +1,6 @@
+# Specification changes should be reviewed on their own.
+# @AGuski is the local git author name. GitHub only requests a review if that
+# is also the GitHub login; replace it if the account name differs.
+LeanSafetyGate/Spec.lean @AGuski
+REQUIREMENTS.md @AGuski
+spec.lock @AGuski

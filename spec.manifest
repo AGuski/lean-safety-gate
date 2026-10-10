@@ -1,0 +1,8 @@
+# Each name is a `def <name> : Prop` in LeanSafetyGate/Spec.lean.
+# The gate requires a theorem of the same name whose type is Spec.<name>.
+motorOnlyWhenSafe
+estopLatchHoldsUntilReset
+noAutomaticRestart
+startIgnoredWhileLatched
+startEnablesWhenClear
+motorHoldsWhileSafe
