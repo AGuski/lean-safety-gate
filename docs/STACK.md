@@ -83,3 +83,18 @@ No toolchain change. `lake build` succeeds on `LeanSafetyGate.Model` and `LeanSa
 `#guard` lines in `Model.lean` evaluate a few traces. They are not proofs of the propositions in `Spec.lean`.
 
 **`List.get?` is not a field in Lean 4.34.** Writing `trace.get? i` failed with `Invalid field get?: The environment does not contain List.get?`. The indexing notation `trace[i]?` elaborates and is what `Spec.lean` uses.
+
+## Phase 2 — proofs
+
+`LeanSafetyGate/Proofs.lean` proves all six propositions. `lake build` succeeds, the language server reports no warnings on that file, and there is no `sorry`. `lean_verify` reports each of the six theorems depends only on `propext`.
+
+The shape of every proof is the same. `step_motor_true_iff` says when one scan turns the motor on. The trace theorems induct on the input list and carry an arbitrary starting `State`, plus the fact that its latch equals the specification's latch. `Spec.motorAt` is the special case that starts from `init`. R4 is one application of the R2 theorem: a latched cycle is off whether or not start is pressed.
+
+What took the time:
+
+- The motor fact is a four-way split on the latch, the guards, start, and the previous motor bit, closed with `simp_all`. The goal before that last tactic is the `if` inside `step` after the latch rewrite. That was the Boolean core; the trace inductions are bookkeeping around it.
+- A `have` whose type was an inline `match i with` was elaborated as a match on `i` together with nearby hypotheses. The induction hypothesis would not take that term. Naming the pattern `prevWasOff` fixed it. The compiler's type mismatch, which listed the extra match variables, was the diagnosis.
+- `guardsOk = true` unfolded to a nested `∧` that was not definitionally the flat one in the specification. `and_assoc` closes it.
+- `List.getElem?_cons_zero` is not a `@[simp]` lemma. Naming it in `simp` was redundant once the zero case reduced on its own, and the unused-argument warning said so.
+
+R3 and R6 are the proofs that had to talk about the previous cycle. On the first cycle of a suffix, "previous" is the motor bit in the carried state; after that it is the previous output. Getting those two to be the same `Nat` recursion was the fiddly part. R1, R2, and R5 were the same induction with less memory.
