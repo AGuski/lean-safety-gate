@@ -1,0 +1,6 @@
+name = "LeanSafetyGate"
+version = "0.1.0"
+defaultTargets = ["LeanSafetyGate"]
+
+[[lean_lib]]
+name = "LeanSafetyGate"

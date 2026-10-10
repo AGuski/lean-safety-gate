@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "lean-lsp": {
+      "command": "/opt/homebrew/bin/uvx",
+      "args": ["lean-lsp-mcp==0.31.0"],
+      "env": {
+        "LEAN_PROJECT_PATH": "/Users/alex/Documents/projects/freelance/lean-safety-gate",
+        "PATH": "/Users/alex/.elan/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+      }
+    }
+  }
+}
