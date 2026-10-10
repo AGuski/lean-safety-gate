@@ -97,3 +97,13 @@ The script checks four things after the build:
 `lean-action` can also run `axiom-audit`, which inspects the compiled environment. This repo uses `#print axioms` instead, because that is the check the gate is supposed to show, and the same script owns the lock and the manifest.
 
 `.github/CODEOWNERS` names `LeanSafetyGate/Spec.lean`, `REQUIREMENTS.md`, and `spec.lock`. GitHub requests a review only when each owner is a real account or team login.
+
+## Phase 4 — differential tests
+
+No new Lean dependency. `Lean.Data.Json` is in the toolchain. `FromJson (Array α)` exists; `FromJson (List α)` does not, so the executable decodes `Array Inputs` and calls `toList`. `Json.compress` is in `Lean.Data.Json.Printer`, which `Lean.Data.Json` imports. A parse error goes to stderr and the process returns 1. The message from a non-JSON stdin starts with `offset 0:`.
+
+`lakefile.toml` adds a `[[lean_exe]]` named `safety-gate`, rooted at `LeanSafetyGate.Main`, and lists it in `defaultTargets`. `lake build` and the gate therefore build the binary. The tests call `.lake/build/bin/safety-gate` directly. `lake exe` would pay for a Lake startup on every example.
+
+`python/controller.py` reimplements `guardsOk`, `nextLatch`, and `step`. It is not generated from the Lean file. `pytest` 8.4.2 and `hypothesis` 6.141.1 are pinned in `python/requirements.txt`. CI installs them with `actions/setup-python` 3.12 after `lean-action`, so `lake` is still on `PATH` when the fixture builds the executable.
+
+The property test sets `database=None`. Hypothesis otherwise tries to write `.hypothesis/examples`, and that path is unusable in some sandboxes, which becomes a warning rather than a saved corpus. A failing example is still printed. `.hypothesis` is gitignored in case a local run creates it.
